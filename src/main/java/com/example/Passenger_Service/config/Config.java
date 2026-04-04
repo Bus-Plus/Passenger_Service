@@ -1,5 +1,9 @@
 package com.example.Passenger_Service.config;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -7,6 +11,12 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.firestore.Firestore;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.cloud.FirestoreClient;
 
 @Configuration
 @EnableWebSecurity
@@ -16,6 +26,18 @@ public class Config {
 
     public Config(JwtTokenProvider tokenProvider) {
         this.tokenProvider = tokenProvider;
+    }
+
+    @Bean
+    public Firestore firestore(@Value("${firebase.service-account-key-path}") String serviceAccountKeyPath) throws IOException {
+        FirebaseOptions options = FirebaseOptions.builder()
+                .setCredentials(GoogleCredentials.fromStream(new FileInputStream(serviceAccountKeyPath)))
+                .build();
+
+        if (FirebaseApp.getApps().isEmpty()) {
+            FirebaseApp.initializeApp(options);
+        }
+        return FirestoreClient.getFirestore();
     }
 
     @Bean
