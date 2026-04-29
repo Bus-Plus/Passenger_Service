@@ -54,14 +54,19 @@ public class BusRouteController {
 
     @GetMapping("/bus-numbers")
     public ResponseEntity<?> getBusNumbers() {
+        System.out.println("DEBUG: getBusNumbers called");
         try {
             var busNumbers = busRouteService.getBusNumbers();
             var dto = new BusNumbersDto(busNumbers);
             return ResponseEntity.ok(dto);
         } catch (IllegalStateException e) {
+            System.out.println("DEBUG: getBusNumbers IllegalStateException: " + e.getMessage());
+            System.out.println("DEBUG: stack trace: " + java.util.Arrays.toString(e.getStackTrace()));
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(e.getMessage());
         } catch (RuntimeException e) {
+            System.out.println("DEBUG: getBusNumbers RuntimeException: " + e.getMessage());
+            System.out.println("DEBUG: stack trace: " + java.util.Arrays.toString(e.getStackTrace()));
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(e.getMessage());
         }
@@ -69,16 +74,49 @@ public class BusRouteController {
 
     @GetMapping("/bus-numbers/{busNumber}/stops")
     public ResponseEntity<?> getBusStopsByBusNumber(@PathVariable String busNumber) {
+        System.out.println("DEBUG: getBusStopsByBusNumber called for busNumber=" + busNumber);
         try {
             BusStopsDto dto = busRouteService.getBusStops(busNumber);
             return ResponseEntity.ok(dto);
         } catch (IllegalStateException e) {
+            System.out.println("DEBUG: getBusStopsByBusNumber IllegalStateException for busNumber=" + busNumber + ": " + e.getMessage());
+            System.out.println("DEBUG: stack trace: " + java.util.Arrays.toString(e.getStackTrace()));
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(e.getMessage());
         } catch (IllegalArgumentException e) {
+            System.out.println("DEBUG: getBusStopsByBusNumber IllegalArgumentException for busNumber=" + busNumber + ": " + e.getMessage());
+            System.out.println("DEBUG: stack trace: " + java.util.Arrays.toString(e.getStackTrace()));
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(e.getMessage());
         } catch (RuntimeException e) {
+            System.out.println("DEBUG: getBusStopsByBusNumber RuntimeException for busNumber=" + busNumber + ": " + e.getMessage());
+            System.out.println("DEBUG: stack trace: " + java.util.Arrays.toString(e.getStackTrace()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/routes/{routeId}/status/{selectedStopIndex}")
+    public ResponseEntity<?> getRouteBusStatuses(
+            @PathVariable String routeId,
+            @PathVariable int selectedStopIndex) {
+        System.out.println("DEBUG: getRouteBusStatuses called for routeId=" + routeId + ", selectedStopIndex=" + selectedStopIndex);
+        try {
+            var statusList = busRouteService.getRouteBusStatuses(routeId, selectedStopIndex);
+            return ResponseEntity.ok(statusList);
+        } catch (IllegalStateException e) {
+            System.out.println("DEBUG: getRouteBusStatuses IllegalStateException for routeId=" + routeId + ": " + e.getMessage());
+            System.out.println("DEBUG: stack trace: " + java.util.Arrays.toString(e.getStackTrace()));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("DEBUG: getRouteBusStatuses IllegalArgumentException for routeId=" + routeId + ": " + e.getMessage());
+            System.out.println("DEBUG: stack trace: " + java.util.Arrays.toString(e.getStackTrace()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (RuntimeException e) {
+            System.out.println("DEBUG: getRouteBusStatuses RuntimeException for routeId=" + routeId + ": " + e.getMessage());
+            System.out.println("DEBUG: stack trace: " + java.util.Arrays.toString(e.getStackTrace()));
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(e.getMessage());
         }

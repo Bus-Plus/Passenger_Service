@@ -9,7 +9,7 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
       dialect: org.hibernate.dialect.MySQL8Dialect
     show-sql: ${SHOW_SQL:true}
     properties:
