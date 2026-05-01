@@ -50,4 +50,10 @@ public class JwtTokenProvider {
         Object role = claims.get("role");
         return role != null ? role.toString() : null;
     }
+
+    public String getUserId(String token) {
+        Claims claims = Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
+        Object userId = claims.get("subject");
+        return userId != null ? userId.toString() : null;
+    }
 }

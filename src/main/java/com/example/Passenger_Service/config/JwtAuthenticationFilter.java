@@ -32,40 +32,52 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             String token = bearerToken.substring(7);
 
-            if (tokenProvider.validateToken(token)) {
-                String username = tokenProvider.getUsername(token);
-                String role = tokenProvider.getRole(token);
+            if (!tokenProvider.validateToken(token)) {
+                sendErrorResponse(response, "Invalid or expired token");
+                return;
+            }
 
-                if (username != null) {
-                    if (role != null) {
-                        String normalizedRole = role.replace("ROLE_", "").trim().toUpperCase();
-                        String authority;
-                        if ("SUPERADMIN".equals(normalizedRole)) {
-                            authority = "SUPER_ADMIN";
-                        } else {
-                            authority = normalizedRole;
-                        }
+            String username = tokenProvider.getUsername(token);
+            String userId = tokenProvider.getUserId(token);
+            String role = tokenProvider.getRole(token);
+            String principal = userId != null ? userId : username;
 
-                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + authority))
-                        );
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
+            if (principal != null) {
+                if (role != null) {
+                    String normalizedRole = role.replace("ROLE_", "").trim().toUpperCase();
+                    String authority;
+                    if ("SUPERADMIN".equals(normalizedRole)) {
+                        authority = "SUPER_ADMIN";
                     } else {
-                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                List.of()
-                        );
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        authority = normalizedRole;
                     }
+
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            principal,
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_" + authority))
+                    );
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            principal,
+                            null,
+                            List.of()
+                    );
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{\"error\":\"" + message + "\"}");
     }
 }

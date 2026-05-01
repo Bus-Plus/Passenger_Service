@@ -1,6 +1,7 @@
 package com.example.Passenger_Service.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,8 +20,10 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/by-userid/{userId}")
-    public ResponseEntity<User> getByUserId(@PathVariable String userId) {
+    @GetMapping("/by-userid")
+    public ResponseEntity<User> getByUserId(Authentication authentication) {
+
+        String userId = authentication.getName();
         return userService.findByUserId(userId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

@@ -24,7 +24,7 @@ public class User {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "email", nullable = false, unique = true, length = 100)
+    @Column(name = "email", nullable = true, unique = true, length = 100)
     private String email;
 
     @Column(name = "mobile", nullable = false, length = 10)
