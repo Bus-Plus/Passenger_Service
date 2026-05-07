@@ -51,9 +51,18 @@ public class JwtTokenProvider {
         return role != null ? role.toString() : null;
     }
 
+    public Date getExpirationDate(String token) {
+        Claims claims = Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
+        return claims.getExpiration();
+    }
+
     public String getUserId(String token) {
         Claims claims = Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
-        Object userId = claims.get("subject");
+        String subject = claims.getSubject();
+        if (subject != null && !subject.isBlank()) {
+            return subject;
+        }
+        Object userId = claims.get("userId");
         return userId != null ? userId.toString() : null;
     }
 }

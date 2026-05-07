@@ -111,6 +111,7 @@ public class BusRouteServiceImpl implements IBusRouteService {
         return activeBuses.stream()
                 .map(busId -> createRouteBusStatus(routeId, busId, selectedStopIndex, stops))
                 .filter(Objects::nonNull)
+                .sorted(java.util.Comparator.comparingInt(RouteBusStatusDto::getCurrentStopIndex))
                 .collect(Collectors.toList());
     }
 
@@ -150,10 +151,31 @@ public class BusRouteServiceImpl implements IBusRouteService {
             }
 
             Long currentStopIndexValue = snapshot.getLong("currentStopIndex");
+            if (currentStopIndexValue == null) {
+                currentStopIndexValue = snapshot.getLong("currentStop");
+            }
+            if (currentStopIndexValue == null) {
+                Object currentStopObj = snapshot.get("currentStop");
+                if (currentStopObj == null) {
+                    currentStopIndexValue = null;
+                } else {
+                    currentStopIndexValue = switch (currentStopObj) {
+                        case Number number -> number.longValue();
+                        case String s -> parseLongOrNull(s);
+                        default -> null;
+                    };
+                }
+            }
             int currentStopIndex = currentStopIndexValue != null ? currentStopIndexValue.intValue() : -1;
             System.out.println("DEBUG: busId=" + busId + " currentStopIndex=" + currentStopIndex);
 
             Object countsObj = snapshot.get("passengerCountsPerStop");
+            if (countsObj == null) {
+                countsObj = snapshot.get("stops");
+            }
+            if (countsObj == null) {
+                countsObj = snapshot.get("passengerCounts");
+            }
             List<Integer> passengerCounts;
             if (countsObj instanceof List<?> rawList) {
                 passengerCounts = rawList.stream()
@@ -163,7 +185,7 @@ public class BusRouteServiceImpl implements IBusRouteService {
             } else {
                 passengerCounts = java.util.Collections.emptyList();
             }
-            System.out.println("DEBUG: busId=" + busId + " passengerCountsPerStop size=" + passengerCounts.size() + " values=" + passengerCounts);
+            System.out.println("DEBUG: busId=" + busId + " passengerCounts size=" + passengerCounts.size() + " values=" + passengerCounts);
 
             int currentPassengers = 0;
             if (currentStopIndex >= 0 && currentStopIndex < passengerCounts.size()) {
@@ -173,10 +195,7 @@ public class BusRouteServiceImpl implements IBusRouteService {
             System.out.println("DEBUG: busId=" + busId + " currentPassengers=" + currentPassengers);
 
             Integer expectedCount = null;
-            if (currentStopIndex >= 0 && currentStopIndex < passengerCounts.size()
-                    && selectedStopIndex >= 0
-                    && selectedStopIndex < passengerCounts.size()
-                    && currentStopIndex < selectedStopIndex) {
+            if (selectedStopIndex >= 0 && selectedStopIndex < passengerCounts.size()) {
                 Integer expectedCountValue = passengerCounts.get(selectedStopIndex);
                 expectedCount = expectedCountValue != null ? expectedCountValue : null;
             }
@@ -229,5 +248,13 @@ public class BusRouteServiceImpl implements IBusRouteService {
             return number.intValue();
         }
         return 0;
+    }
+
+    private static Long parseLongOrNull(String value) {
+        try {
+            return Long.valueOf(value);
+        } catch (NumberFormatException ignore) {
+            return null;
+        }
     }
 }
