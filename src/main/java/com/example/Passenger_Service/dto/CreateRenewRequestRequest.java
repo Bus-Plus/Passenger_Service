@@ -1,7 +1,10 @@
 package com.example.Passenger_Service.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 public class CreateRenewRequestRequest {
 
+    @JsonAlias({"id"})
     private String passId;
     private String passTypeName;
 

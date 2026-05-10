@@ -64,7 +64,7 @@ public class PassServiceImpl implements PassService {
         String passTypeName = passType.map(PassType::getPassType).orElse(null);
 
         return new PassDto(
-                passEst.getPassId(),
+                passEst.getId(),
                 passTypeName,
                 passEst.getFromLocation(),
                 passEst.getToLocation(),

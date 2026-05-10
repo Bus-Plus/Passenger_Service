@@ -3,6 +3,8 @@ package com.example.Passenger_Service.config;
 import java.io.IOException;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger jwtLogger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtTokenProvider tokenProvider;
 
     public JwtAuthenticationFilter(JwtTokenProvider tokenProvider) {
@@ -28,11 +31,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String bearerToken = request.getHeader("Authorization");
+        jwtLogger.debug("JwtAuthenticationFilter processing request {} with Authorization header present={}", request.getRequestURI(), StringUtils.hasText(bearerToken));
 
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             String token = bearerToken.substring(7);
 
             if (!tokenProvider.validateToken(token)) {
+                jwtLogger.debug("JWT validation failed for request {}", request.getRequestURI());
                 sendErrorResponse(response, "Invalid or expired token");
                 return;
             }
@@ -69,6 +74,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
+        } else {
+            jwtLogger.debug("JwtAuthenticationFilter rejected request {} because Authorization header is missing or malformed", request.getRequestURI());
         }
 
         filterChain.doFilter(request, response);

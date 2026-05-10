@@ -1,4 +1,8 @@
 
+logging:
+  level:
+    com.example.Passenger_Service: DEBUG
+
 server:
   port: ${SERVER_PORT}
 
