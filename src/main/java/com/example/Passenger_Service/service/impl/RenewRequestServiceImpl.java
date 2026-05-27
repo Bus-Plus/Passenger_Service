@@ -1,5 +1,6 @@
 package com.example.Passenger_Service.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -80,11 +81,19 @@ public class RenewRequestServiceImpl implements RenewRequestService {
                     "Received passTypeName does not match the pass type stored for this pass");
         }
 
-        logger.debug("Checking for existing renew request for passId='{}'", id);
-        if (renewRequestRepository.existsByPassId(id)) {
-            logger.debug("Renew request already exists for passId='{}'", id);
+        LocalDateTime now = LocalDateTime.now();
+        logger.debug("Renewal expiry check for passId='{}' expiry='{}' now='{}'", id, existing.getExpiry(), now);
+        if (!isExpiryRenewable(existing.getExpiry(), now)) {
+            logger.debug("Pass expiry is not within the renewable window for passId='{}'", id);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Pass cannot be renewed until it is expired or within 15 days of expiry");
+        }
+
+        logger.debug("Checking for existing waiting renew request for passId='{}'", id);
+        if (renewRequestRepository.existsByPassIdAndStatus(id, RenewRequestStatus.WAITING)) {
+            logger.debug("Renew request with status WAITING already exists for passId='{}'", id);
             logger.debug("THROWING 409 CONFLICT NOW for passId='{}'", id);
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Renew request already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A renew request is already waiting for this pass");
         }
 
         RenewRequest renewRequest = new RenewRequest(
@@ -97,6 +106,11 @@ public class RenewRequestServiceImpl implements RenewRequestService {
         RenewRequest savedRequest = renewRequestRepository.save(renewRequest);
         logger.debug("Saved RenewRequest id='{}' with status='{}'", savedRequest.getId(), savedRequest.getStatus());
         return savedRequest;
+    }
+
+    private boolean isExpiryRenewable(LocalDateTime expiry, LocalDateTime now) {
+        // Allow renewal when the pass is already expired or when the expiry is within 15 days from now.
+        return expiry == null || !expiry.isAfter(now) || !expiry.isAfter(now.plusDays(15));
     }
 
 }

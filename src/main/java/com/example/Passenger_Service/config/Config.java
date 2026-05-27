@@ -72,6 +72,8 @@ public class Config {
                         // Public access only for the connectivity controller
                         .requestMatchers("/connectivity/**").permitAll()
                         .requestMatchers("/users/**").hasRole("USER")
+                        .requestMatchers("/passes/user").hasRole("USER")
+                        .requestMatchers("/passes/user/{userId}").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
