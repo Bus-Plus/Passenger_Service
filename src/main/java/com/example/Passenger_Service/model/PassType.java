@@ -1,9 +1,15 @@
 package com.example.Passenger_Service.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
+
 
 @Entity
 @Table(name = "passestype")
@@ -15,6 +21,9 @@ public class PassType {
 
     @Column(name = "passtype", length = 30, nullable = false)
     private String passType;
+
+    @OneToMany(mappedBy = "passType")
+    private List<PassEst> passes = new ArrayList<>();
 
     public PassType() {
     }
@@ -38,5 +47,12 @@ public class PassType {
 
     public void setPassType(String passType) {
         this.passType = passType;
+    }
+    public List<PassEst> getPasses() {
+        return passes;
+    }
+
+    public void setPasses(List<PassEst> passes) {
+        this.passes = passes;
     }
 }
